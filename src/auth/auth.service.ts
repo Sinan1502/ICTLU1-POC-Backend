@@ -4,13 +4,20 @@ import { InjectModel } from '@nestjs/mongoose';
 import { User } from './schemas/user.schema';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcrypt';
+import { loginDto } from './dtos/login.dto';
+import { JwtService } from '@nestjs/jwt';
+import { RefreshToken } from './schemas/refresh-token.schema';
 
 @Injectable()
 export class AuthService {
-    constructor(@InjectModel(User.name) private UserModel: Model<User>) {}
+  constructor(@InjectModel(User.name) private UserModel: Model<User>,
+  @InjectModel(RefreshToken.name) private RefreshTokenModel: Model<RefreshToken>,  
+  private jwtService: JwtService,
+) {}
+
 
   async signup(signupData: SignupDto) {
-    const {email, password, name} = signupData;
+    const { email, password, name } = signupData;
 
     const emailInUse = await this.UserModel.findOne({
       email,
@@ -26,6 +33,28 @@ export class AuthService {
       email,
       password: hashedPassword,
     });
+  }
+  async login(credentials: loginDto) {
+    const { email, password } = credentials;
+    const user = await this.UserModel.findOne({ email });
+    if (!user) {
+      throw new BadRequestException('Invalid credentials');
+    }
+
+    const passwordMatch = await bcrypt.compare(password, user.password);
+    if (!passwordMatch) {
+      throw new BadRequestException('Invalid credentials');
+    }
+
+    return this.generateUserTokens(user._id);
+
+    return { message: 'Login successful' };
 
   }
+   async generateUserTokens(userId) {
+      const accessToken = this.jwtService.sign({ userId }, {expiresIn: '1h' });
+      return {accessToken, message: 'Login successful' };
+    }
+
 }
+

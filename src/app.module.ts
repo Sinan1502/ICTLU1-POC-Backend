@@ -4,22 +4,34 @@ import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { JwtModule } from '@nestjs/jwt';
+import config from './config/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
+    ConfigModule.forRoot({
+      isGlobal: true,
+      cache: true,
+      load: [config],
+    }),
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (config: ConfigService) => ({
+        secret: config.get('jwt.secret'),
+      }),
+      global: true,
+      inject: [ConfigService],
+    }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
+      useFactory: async (config) => ({
+        uri: config.get('database.connectionString'),
+      }),
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => {
-        const uri = configService.get<string>('MONGO_URI');
-        console.log('Connecting to MongoDB with URI:', uri); // <-- hier log je de URI
-        return { uri };
-      },
     }),
     AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
