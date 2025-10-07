@@ -54,10 +54,16 @@ export class AuthService {
   }
 
   async refreshTokens(refreshToken: string) {
-    const token = await this.RefreshTokenModel.findOne({
+    const token = await this.RefreshTokenModel.findOneAndDelete({
       token: refreshToken,
       expiryDate: { $gt: new Date() }
     });
+
+    if (!token) {
+      throw new BadRequestException('Invalid or expired refresh token');
+    }
+
+    return this.generateUserTokens(token.userId);
   }
 
   async generateUserTokens(userId) {
