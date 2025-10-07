@@ -8,7 +8,9 @@ export class AuthController {
 
   //post register
   @Post('signup') //sign up
-  async signup(@Body () signupData: SignupDto) {}
+  async signup(@Body () signupData: SignupDto) {
+    return this.authService.signup(signupData);
+  }
   //post login
 
   //post refresh token
