@@ -7,6 +7,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import config from './config/config';
 
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -35,3 +36,5 @@ import config from './config/config';
   providers: [AppService],
 })
 export class AppModule { }
+
+console.log(process.env.MONGO_URI);

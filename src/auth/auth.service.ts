@@ -7,13 +7,14 @@ import * as bcrypt from 'bcrypt';
 import { loginDto } from './dtos/login.dto';
 import { JwtService } from '@nestjs/jwt';
 import { RefreshToken } from './schemas/refresh-token.schema';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class AuthService {
   constructor(@InjectModel(User.name) private UserModel: Model<User>,
-  @InjectModel(RefreshToken.name) private RefreshTokenModel: Model<RefreshToken>,  
-  private jwtService: JwtService,
-) {}
+    @InjectModel(RefreshToken.name) private RefreshTokenModel: Model<RefreshToken>,
+    private jwtService: JwtService,
+  ) { }
 
 
   async signup(signupData: SignupDto) {
@@ -51,10 +52,28 @@ export class AuthService {
     return { message: 'Login successful' };
 
   }
-   async generateUserTokens(userId) {
-      const accessToken = this.jwtService.sign({ userId }, {expiresIn: '1h' });
-      return {accessToken, message: 'Login successful' };
-    }
+
+  async refreshTokens(refreshToken: string) {
+    const token = await this.RefreshTokenModel.findOne({
+      token: refreshToken,
+      expiryDate: { $gt: new Date() }
+    });
+  }
+
+  async generateUserTokens(userId) {
+    const accessToken = this.jwtService.sign({ userId }, { expiresIn: '1h' });
+    const refreshToken = uuidv4();
+
+    await this.storeRefreshToken(refreshToken, userId);
+
+    return { accessToken, refreshToken, message: 'Login successful' };
+  }
+
+  async storeRefreshToken(token: string, userId) {
+    const expiryDate = new Date();
+    expiryDate.setDate(expiryDate.getDate() + 3); // 7 days validity
+    await this.RefreshTokenModel.create({ token, userId, expiryDate });
+  }
 
 }
 
