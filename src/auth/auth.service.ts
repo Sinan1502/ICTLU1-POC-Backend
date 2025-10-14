@@ -34,7 +34,10 @@ export class AuthService {
       email,
       password: hashedPassword,
     });
+
+    return { message: 'User registered successfully' };
   }
+
   async login(credentials: loginDto) {
     const { email, password } = credentials;
     const user = await this.UserModel.findOne({ email });
@@ -48,9 +51,6 @@ export class AuthService {
     }
 
     return this.generateUserTokens(user._id);
-
-    return { message: 'Login successful' };
-
   }
 
   async refreshTokens(refreshToken: string) {
@@ -77,9 +77,7 @@ export class AuthService {
 
   async storeRefreshToken(token: string, userId) {
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() + 3); // 7 days validity
+    expiryDate.setDate(expiryDate.getDate() + 3);
     await this.RefreshTokenModel.create({ token, userId, expiryDate });
   }
-
 }
-

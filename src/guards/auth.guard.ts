@@ -14,19 +14,35 @@ export class AuthGuard implements CanActivate {
     const token = this.extractTokenFromHeader(request);
 
     if (!token) {
+      console.error('No token provided in request');
       throw new UnauthorizedException('No token provided');
     }
 
     try {
       const payload = this.jwtService.verify(token);
       request.userId = payload.userId;
+      return true;
     } catch (e) {
+      console.error('Token verification failed:', e.message);
       throw new UnauthorizedException('Invalid token');
     }
-    return true;
   }
 
   private extractTokenFromHeader(request: Request): string | undefined {
-    return request.headers.authorization?.split(' ')[1];
+    const authHeader = request.headers.authorization;
+    
+    if (!authHeader) {
+      console.error('No authorization header');
+      return undefined;
+    }
+
+    const parts = authHeader.split(' ');
+    
+    if (parts.length !== 2 || parts[0].toLowerCase() !== 'bearer') {
+      console.error('Invalid authorization header format');
+      return undefined;
+    }
+
+    return parts[1];
   }
 }
