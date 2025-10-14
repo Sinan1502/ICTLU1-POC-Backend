@@ -8,8 +8,8 @@ import { RefreshTokenDto } from './dtos/refresh-tokens.dto';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  // POST /auth/signup
-  @Post('signup')
+  // POST /auth/register
+  @Post('register')
   async signup(@Body() signupData: SignupDto) {
     return this.authService.signup(signupData);
   }
